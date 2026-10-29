@@ -1,0 +1,48 @@
+{
+  "name": "cipher",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cipher \u2014 end-to-end encrypted ephemeral messenger with per-message burn timers.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:server": "node --watch --env-file-if-exists=.env server/index.ts",
+    "dev:web": "vite",
+    "build": "npm run typecheck && vite build",
+    "start": "node --env-file-if-exists=.env server/index.ts",
+    "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deadcode": "knip",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run deadcode"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/express": "5.0.3",
+    "@types/node": "24.10.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/ws": "8.18.1",
+    "@vitejs/plugin-react": "5.1.0",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "knip": "5.66.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "7.1.12",
+    "vitest": "3.2.4"
+  }
+}
