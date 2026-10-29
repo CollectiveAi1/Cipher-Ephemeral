@@ -115,6 +115,35 @@ export function rateLimit(options: RateLimitOptions): RequestHandler {
 
 export const clientIp = (req: Request): string => req.ip ?? "unknown";
 
+/**
+ * Cross-origin access for a separately hosted UI, restricted to an explicit allowlist.
+ *
+ * Never `*`: this API is authenticated, and a wildcard would let any page on the
+ * internet drive it with a token it had somehow obtained. Credentials are not allowed
+ * either, because auth travels as a Bearer header rather than a cookie — so there is
+ * no ambient authority for another origin to borrow.
+ */
+export function cors(allowedOrigins: readonly string[]): RequestHandler {
+  return (req, res, next) => {
+    const origin = req.get("origin");
+
+    if (origin !== undefined && allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+      res.setHeader("access-control-allow-origin", origin);
+      res.setHeader("access-control-allow-methods", "GET, POST, PATCH, DELETE, OPTIONS");
+      res.setHeader("access-control-allow-headers", "authorization, content-type");
+      res.setHeader("access-control-max-age", "600");
+    }
+    // Vary regardless, so a cached response for one origin is never reused for another.
+    res.appendHeader("vary", "Origin");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+  };
+}
+
 export function requestLogger(): RequestHandler {
   return (req, res, next) => {
     const started = monotonicMs();

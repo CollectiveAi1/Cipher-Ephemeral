@@ -422,6 +422,13 @@ describe("abuse controls", () => {
     expect(other.status).toBe(200);
   });
 
+  it("does not hand out cross-origin access by default", async () => {
+    // No allowlist configured, so a browser on another origin gets no CORS headers and
+    // the request is blocked client-side.
+    const response = await fetch(`${server.url}/api/health`, { headers: { origin: "https://evil.example" } });
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
   it("returns a structured error for an unknown endpoint", async () => {
     const response = await call(server, null, "GET", "/nope");
     expect(response.status).toBe(404);

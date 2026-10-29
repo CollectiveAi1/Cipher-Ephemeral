@@ -1,0 +1,48 @@
+# Fly.io deployment for the Cipher server.
+#   fly launch --no-deploy --copy-config
+#   fly volumes create cipher_data --size 1
+#   fly secrets set CIPHER_TOKEN_SECRET=$(openssl rand -hex 32)
+#   fly secrets set CIPHER_ALLOWED_ORIGINS=https://<your-vercel-domain>
+#   fly deploy
+app = "cipher-ephemeral"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  CIPHER_PORT = "8787"
+  CIPHER_DB_PATH = "/data/cipher.db"
+  # The UI is served by Vercel, so this process serves the API and socket only.
+  CIPHER_SERVE_STATIC = "false"
+  # Behind Fly's proxy, so the real client address arrives in X-Forwarded-For.
+  CIPHER_TRUST_PROXY = "true"
+
+# SQLite needs a disk that outlives the machine.
+[[mounts]]
+  source = "cipher_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  # A WebSocket is a long-lived connection; stopping the machine would drop every
+  # socket and every call on it.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.http_options]
+    # Comfortably longer than the 30s client heartbeat.
+    idle_timeout = 120
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/api/health"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

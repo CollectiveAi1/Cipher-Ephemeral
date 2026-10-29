@@ -45,5 +45,14 @@ export const env = {
     .split(",")
     .map((url) => url.trim())
     .filter((url) => url !== ""),
+  /**
+   * Browser origins allowed to call this server, for when the UI is hosted separately.
+   * Empty means same-origin only — no cross-origin browser client is permitted, which
+   * is the right default for a single-process deployment.
+   */
+  allowedOrigins: (process.env["CIPHER_ALLOWED_ORIGINS"] ?? "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter((origin) => origin !== ""),
   isTest: process.env["NODE_ENV"] === "test",
 } as const;

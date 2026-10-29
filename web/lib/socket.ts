@@ -1,5 +1,6 @@
 import type { ClientFrame, ServerFrame } from "../../shared/protocol.ts";
 import type { ConnectionState } from "./reducer.ts";
+import { socketUrl } from "./config.ts";
 
 const PING_INTERVAL_MS = 25_000;
 const BACKOFF_BASE_MS = 500;
@@ -76,9 +77,7 @@ export function createSocket(tokenSource: () => string | null, handlers: SocketH
     clearTimers();
     handlers.onState("connecting");
 
-    const url = new URL("/ws", window.location.href);
-    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    const next = new WebSocket(url);
+    const next = new WebSocket(socketUrl());
     socket = next;
 
     next.addEventListener("open", () => {

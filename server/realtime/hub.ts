@@ -1,4 +1,4 @@
-import type { Server } from "node:http";
+import type { IncomingMessage, Server } from "node:http";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { Call, CallKind, Message, PresenceState, Reaction, ServerFrame } from "../../shared/protocol.ts";
 import {
@@ -10,6 +10,7 @@ import {
   TYPING_TTL_MS,
 } from "../../shared/protocol.ts";
 import type { Store } from "../store.ts";
+import { env } from "../env.ts";
 import { logger } from "../logger.ts";
 import { monotonicMs, now } from "../core/time.ts";
 import { hashToken, verifyToken } from "../core/tokens.ts";
@@ -319,7 +320,22 @@ export function createHub(store: Store) {
     presenceOf,
 
     attach(server: Server): void {
-      const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 64 * 1024 });
+      const wss = new WebSocketServer({
+        server,
+        path: "/ws",
+        maxPayload: 64 * 1024,
+        /**
+         * Mirrors the HTTP allowlist. A socket carries no cookie — the token arrives in
+         * the first frame — so this is not what stops hijacking; it is here so the
+         * realtime surface is not broader than the one the API already permits.
+         */
+        verifyClient: ({ origin, req }: { origin: string | undefined; req: IncomingMessage }) => {
+          if (env.allowedOrigins.length === 0) return true;
+          if (origin === undefined || origin === "") return true; // non-browser client
+          const normalized = origin.replace(/\/$/, "");
+          return normalized.endsWith(req.headers.host ?? "\u0000") || env.allowedOrigins.includes(normalized);
+        },
+      });
 
       wss.on("connection", (socket) => {
         connections.set(socket, {

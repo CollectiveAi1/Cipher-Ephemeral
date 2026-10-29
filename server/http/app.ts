@@ -7,7 +7,7 @@ import type { Hub } from "../realtime/hub.ts";
 import { env } from "../env.ts";
 import { now } from "../core/time.ts";
 import { notFound } from "./errors.ts";
-import { clientIp, errorHandler, rateLimit, requestLogger, requireAuth } from "./middleware.ts";
+import { clientIp, cors, errorHandler, rateLimit, requestLogger, requireAuth } from "./middleware.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { callRoutes } from "./routes/calls.ts";
 import { communityRoutes } from "./routes/communities.ts";
@@ -23,6 +23,7 @@ export function createApp(store: Store, hub: Hub): Express {
   app.disable("x-powered-by");
   if (env.trustProxy) app.set("trust proxy", true);
   app.use(requestLogger());
+  if (env.allowedOrigins.length > 0) app.use(cors(env.allowedOrigins));
 
   // 120 requests per 10s. Keyed by account once authenticated, address before that.
   const generalLimit = rateLimit({

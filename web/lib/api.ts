@@ -13,6 +13,8 @@ import type {
   Reaction,
 } from "../../shared/protocol.ts";
 
+import { apiUrl } from "./config.ts";
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -94,7 +96,7 @@ export function createApi(tokenSource: TokenSource) {
       headers.set("content-type", "application/json");
     }
 
-    const response = await fetch(`/api${path}`, { ...init, headers });
+    const response = await fetch(apiUrl(path), { ...init, headers });
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
       throw new ApiError(
@@ -190,7 +192,7 @@ export function createApi(tokenSource: TokenSource) {
       const token = tokenSource();
       if (token !== null) headers.set("authorization", `Bearer ${token}`);
 
-      const response = await fetch(`/api/media/${id}`, { headers });
+      const response = await fetch(apiUrl(`/media/${id}`), { headers });
       if (!response.ok) throw new ApiError(response.status, "media_unavailable", "Attachment is gone");
       return new Uint8Array(await response.arrayBuffer());
     },
